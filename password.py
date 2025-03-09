@@ -1,45 +1,51 @@
 import random
-import string 
-import requests 
+import string
+import requests
 
-# function that generates a single random character 
-def random_character(): 
-    choices = string.ascii_letters + string.digits + string.punctuation 
+# Function that generates a single random character
+def random_character():
+    choices = string.ascii_letters + string.digits + string.punctuation
     return random.choice(choices)
 
-passwordlength = 12 
+# Ask the user for password length
+while True:
+    try:
+        password_length = int(input("Enter the length of the strong password: "))
+        if password_length < 4:  # Ensuring a minimum length for security
+            print("Password length should be at least 4.")
+            continue
+        break
+    except ValueError:
+        print("Please enter a valid number.")
 
-# function that generates a random password 
-def generate_strong_password():
-    password = ""
-    for i in range(passwordlength): 
-        password = password + random_character()
-    print(password)
+# Function that generates a strong password
+def generate_strong_password(length):
+    return ''.join(random_character() for _ in range(length))
 
-generate_strong_password() 
+# Function to fetch a random word from the API
+def fetch_word():
+    try:
+        response = requests.get("https://random-word-api.herokuapp.com/word?length=6", timeout=5)
+        response.raise_for_status()  # Raise error for bad responses
+        word = response.json()[0]
+        return word
+    except (requests.RequestException, IndexError, ValueError):
+        return "Fallback"  # Use fallback word if API fails
 
-#function to give us a random word 
-def fetch_word(): 
-    response = requests.get("https://random-word-api.herokuapp.com/word?length=6")
-    word = response.json()[0]
-    return word 
+# Function to replace letters for a weaker password
+def replace_letters(word):
+    word = word.capitalize()  # Ensure first letter is uppercase
+    word = word.replace("a", "@").replace("o", "0").replace("i", "1").replace("e", "3")
+    return word
 
-print(fetch_word())
+# Function to generate a weaker password
+def generate_weaker_password():
+    word1 = replace_letters(fetch_word())
+    word2 = replace_letters(fetch_word())
+    return word1 + word2
 
-def replaceLetters(word): 
-    word = word[0].upper() + word[1:]
+# Generate and print passwords
+print("Strong Password:", generate_strong_password(password_length))
+print("Weaker Password:", generate_weaker_password())
 
-    if "a" in word: 
-        word = word.replace("a", "@")
 
-    return word 
-    
-def generate_weaker_password(): 
-    word1 = fetch_word()
-    word2 = fetch_word()
-    word1 = replaceLetters(word1)
-    word2 = replaceLetters(word2)
-    password = word1 + word2 
-    return password
-
-print(generate_weaker_password()) 
